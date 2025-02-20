@@ -10,7 +10,26 @@ generator kysely {
   fileName = "schema.d.ts"
 }
 
-model Example {
-  id   Int    @id @default(autoincrement())
-  name String
+model LoroDoc {
+  id    Int    @id @default(autoincrement())
+  name  String
+  doc   String
+  Nodes Nodes?
+  Edges Edges?
+}
+
+model Nodes {
+  id     Int     @id @default(autoincrement())
+  docId  Int     @unique
+  doc    LoroDoc @relation(fields: [docId], references: [id])
+  nodeId String
+  data   Json
+}
+
+model Edges {
+  id     Int     @id @default(autoincrement())
+  docId  Int     @unique
+  doc    LoroDoc @relation(fields: [docId], references: [id])
+  edgeId String
+  data   Json
 }

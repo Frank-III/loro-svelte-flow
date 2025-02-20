@@ -3,6 +3,13 @@
 	"name": "loro-svelte-flow-worker",
 	"main": "src/worker.ts",
 	"compatibility_date": "2025-02-04",
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "svelte-flow",
+			"database_id": "0af2e57e-b447-44a6-ae44-a51484325d9a"
+		}
+	],
 	"durable_objects": {
 		"bindings": [
 			{
@@ -14,7 +21,9 @@
 	"migrations": [
 		{
 			"tag": "v1",
-			"new_sqlite_classes": ["SocketObject"]
+			"new_sqlite_classes": [
+				"SocketObject"
+			]
 		}
 	],
 	"observability": {

@@ -8,7 +8,6 @@ declare global {
 			};
 			context: ExecutionContext;
 		}
-
 		// interface Locals {}
 		// interface Error {}
 		// interface Session {}
