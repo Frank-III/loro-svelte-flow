@@ -17,7 +17,7 @@ export class MediaListData {
 	}
 }
 
-// what if we make it:
+// what if we make it this way, so that we can $state.snapshot(data) 
 // in the component file:
 // const data = $state({
 // 	label: '',
