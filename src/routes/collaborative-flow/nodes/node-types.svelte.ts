@@ -17,6 +17,17 @@ export class MediaListData {
 	}
 }
 
+// what if we make it:
+// in the component file:
+// const data = $state({
+// 	label: '',
+// 	items: [],
+// 	selected: 0,
+//  get selectedOption() {
+// 		return this.items[this.selected];
+// 	}
+//})
+// and then in the node-types.svelte file:
 export class ListPickerData {
 	label: string = $state('');
 	options: string[] = $state(["Option 1", "Option 2", "Option 3"]);
