@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Handle, Position, type NodeProps, type Node } from '@xyflow/svelte';
-  import { getFlowDoc } from '../LoroDoc.svelte';
+  import { getFlowDoc} from '../LoroDoc.svelte';
   type ListPickerNode = Node<{
     label: string;
     options: string[];
@@ -33,15 +33,15 @@
     }
   }
   $effect(() => {
-    getFlowDoc().addOrModifyNodeData({
-      id,
-      data: {
+      getFlowDoc().addOrModifyNodeData({
+        id,
+        data: {
         label: data.label,
         options: data.options,
         selected: data.selected
       },
       type: 'picker'
-    })
+      })
   })
 </script>
 

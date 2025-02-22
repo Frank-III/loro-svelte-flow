@@ -13,15 +13,14 @@ interface Structure {
 }
 
 export class FlowDoc {
-	doc: LoroDoc;
-	loroNodes: LoroMap;
-	loroEdges: LoroMap;
+	doc: LoroDoc = $state(new LoroDoc());
+	isSyncing = $state(false);
+	peerId: number;
 
-	constructor() {
-		this.doc = new LoroDoc();
-		this.doc.setPeerId(1n);
-		this.loroNodes = this.doc.getMap('nodes');
-		this.loroEdges = this.doc.getMap('edges');
+	constructor(doc: LoroDoc = new LoroDoc()) {
+		this.doc = doc;
+		this.peerId = Math.random() * 1000;
+		this.doc.setPeerId(this.peerId);
 	}
 
 	addOrModifyNodeData(node: {
@@ -29,6 +28,7 @@ export class FlowDoc {
 		data: Record<string, unknown>;
 		type: string;
 	}) {
+		if (this.isSyncing) return;
 		const nodeMap = this.loroNodes.getOrCreateContainer(node.id, new LoroMap());
 		const dataMap = nodeMap.setContainer('data', new LoroMap());
 		Object.entries(node.data).forEach(([key, value]) => {
@@ -41,6 +41,7 @@ export class FlowDoc {
 	}
 
 	modifyNodePosition(node: Node) {
+		if (this.isSyncing) return;
 		const nodeMap = this.loroNodes.getOrCreateContainer(node.id, new LoroMap());
 		const positionMap = nodeMap.getOrCreateContainer('position', new LoroMap());
 		positionMap.set('x', node.position.x);
@@ -48,9 +49,12 @@ export class FlowDoc {
 		this.doc.commit();
 	}
 	deleteNode(node: Node) {
+		if (this.isSyncing) return;
 		this.loroNodes.delete(node.id);
+		this.doc.commit();
 	}
 	addOrModifyEdge(edge: Edge) {
+		if (this.isSyncing) return;
 		const edgeMap = this.loroEdges.getOrCreateContainer(edge.id, new LoroMap());
 		edgeMap.set('source', edge.source);
 		edgeMap.set('sourceHandle', edge.sourceHandle);
@@ -59,8 +63,17 @@ export class FlowDoc {
 	}
 
 	deleteEdge(edge: Edge) {
+		if (this.isSyncing) return;
 		this.loroEdges.delete(edge.id);
 		this.doc.commit();
+	}
+
+	get loroNodes() {
+		return this.doc.getMap('nodes');
+	}
+
+	get loroEdges() {
+		return this.doc.getMap('edges');
 	}
 }
 

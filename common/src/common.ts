@@ -7,7 +7,19 @@ export const clientToServerSchema = z.object({
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
 
-export type ServerToClient = {
-	type: 'message';
-	payload: string;
-};
+export type ServerToClient =
+	| {
+			type: 'delta';
+			payload: Uint8Array;
+	  }
+	| {
+			type: 'version';
+			payload: Uint8Array;
+	  }
+	| {
+			type: 'delta-and-version';
+			payload: {
+				delta: Uint8Array;
+				version: Uint8Array;
+			};
+	  };

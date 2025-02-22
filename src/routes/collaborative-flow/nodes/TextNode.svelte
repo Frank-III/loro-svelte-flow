@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Handle, Position, type NodeProps, type Node } from '@xyflow/svelte';
-	import { getFlowDoc } from '../LoroDoc.svelte';
+	import { getFlowDoc,} from '../LoroDoc.svelte';
 
 
   type TextNode = Node<{

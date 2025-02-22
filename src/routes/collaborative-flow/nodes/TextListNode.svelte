@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Handle, Position, type NodeProps, type Node } from '@xyflow/svelte';
 	import type { TextItem } from './node-types.svelte';
-	import { getFlowDoc } from '../LoroDoc.svelte';
+	import { getFlowDoc} from '../LoroDoc.svelte';
 
 
   type TextListNode = Node<{
@@ -13,14 +13,14 @@
 
   $effect(() => {
     const flowDoc = getFlowDoc();
-    flowDoc.addOrModifyNodeData({
-      id,
-      data: {
-        label: data.label,
+      flowDoc.addOrModifyNodeData({
+        id,
+        data: {
+          label: data.label,
         items: data.items
       },
       type: 'textList'
-    })
+      })
   })
 
   function addItem() {

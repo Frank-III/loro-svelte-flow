@@ -10,9 +10,6 @@
     type Edge,
     type NodeTypes,
     useSvelteFlow,
-		type NodeEventWithPointer,
-		type NodeTargetEventWithPointer,
-		useNodes,
   } from '@xyflow/svelte';
   import PartySocket from 'partysocket';
   import '@xyflow/svelte/dist/style.css';
@@ -24,6 +21,10 @@
   import ListPickerNode from './nodes/ListPickerNode.svelte';
   import { TextNodeData, TextListData, MediaListData, ListPickerData } from './nodes/node-types.svelte';
 	import { onMount } from 'svelte';
+  import { Spring } from 'svelte/motion';
+	import { VersionVector } from 'loro-crdt';
+	import { constructEdgesFromLoroMap, constructNodesFromLoroMap } from '@/utils';
+	import type { ServerToClient } from 'common';
   // Define node types
   const nodeTypes: NodeTypes = {
     text: TextNode,
@@ -31,31 +32,61 @@
     mediaList: MediaListNode,
     picker: ListPickerNode
   };
+  let vvs = $state<VersionVector>();
 
-  const isSyncing = $state(false);
-
-  onMount(() => {
+  $effect.root(() => {
+    let flowDoc = setFlowDoc();
     const ws = new PartySocket({
       host: 'localhost:8787',
-      room: '1',
+      room: "my-room",
       protocol: 'ws',
     })
+    ws.onopen = (event) => {
+      console.log('open', event)
+    }
+    ws.onmessage = (event) => {
+      const data: ServerToClient = JSON.parse(event.data);
+      // console.log('data', data)
+      if (data.type === 'version') {
+        console.log('version', data.payload)
+        vvs = VersionVector.decode(new Uint8Array(Object.values(data.payload)))
+      } else if (data.type === 'delta-and-version') {
+        console.log('delta-and-version', data.payload)
+        vvs = VersionVector.decode(new Uint8Array(Object.values(data.payload.version)));
+        try {
+          flowDoc!.doc.import(new Uint8Array(Object.values(data.payload.delta)));
+          nodes = constructNodesFromLoroMap(flowDoc!.loroNodes);
+          edges = constructEdgesFromLoroMap(flowDoc!.loroEdges);
+        } finally {
+          setTimeout(() => {
+            flowDoc!.isSyncing = false;
+          }, 0);
+        }
+      }
+    }
+
+    const sub = flowDoc?.doc.subscribeLocalUpdates((event) => {
+      if (flowDoc!.isSyncing && !flowDoc?.doc.isDetached()) return
+          console.log('sending update', vvs)
+          const delta = flowDoc?.doc.export({mode: "update", from: vvs})
+          if (delta) {
+            ws?.send(delta.slice().buffer!)
+          }
+    })
+    return () => {
+      sub?.();
+      ws?.close();
+    }
   })
 
   let flowDoc: FlowDoc | undefined;
-  $effect.pre(() => {
-    flowDoc = setFlowDoc();
-    const sub = flowDoc?.doc.subscribe((event) => {
-      // get other peers versions and export updates
-      console.dir(event, { depth: null })
-      // console.log('version', flowDoc?.doc.version())
-      // console.dir(flowDoc?.doc.toJSON(), { depth: null })
-    })
-    return sub
-  })
   let nodes = $state.raw<Node[]>([]);
   let edges = $state.raw<Edge[]>([]);
-  let toolbarPosition = $state({ x: 20, y: 20 }); // Default position
+  // let toolbarPosition = $state(); // Default positiona
+  let springToolbarPosition = new Spring({ x: 20, y: 20 }, {
+    stiffness: 0.1,
+    damping: 0.5,
+  })
   
   const { screenToFlowPosition } = $derived(useSvelteFlow());
   
@@ -102,18 +133,20 @@
       position,
       data: data as any
     };
+
+    flowDoc?.modifyNodePosition(newNode)
     
     nodes = [...nodes, newNode];
   };
   
   const onPaneContextMenu = (event: MouseEvent) => {
     event.preventDefault();
-    toolbarPosition = {
+    springToolbarPosition.set({
       x: event.clientX,
       y: event.clientY
-    };
+    });
   };
-  $inspect(nodes)
+
 </script>
 
 <SvelteFlow
@@ -127,6 +160,15 @@
   onnodedragstop={({targetNode}) => {
     if (targetNode) {
       flowDoc?.modifyNodePosition(targetNode);
+    }
+  }}
+  onconnectend={(e, state) => {
+    // if not node is connected, move the toolbar to the location
+    if (state.toHandle === null) {
+      const position = springToolbarPosition.set({
+        x: state.to?.x ?? 20,
+        y: state.to?.y ?? 20
+      });
     }
   }}
   onconnect={(e) => {
@@ -158,7 +200,7 @@
   <Panel 
     position="top-left" 
     class="animated-panel"
-    style="transform: translate({toolbarPosition.x}px, {toolbarPosition.y}px);"
+    style="transform: translate({springToolbarPosition.current.x}px, {springToolbarPosition.current.y}px);"
   >
     <Toolbar />
   </Panel>

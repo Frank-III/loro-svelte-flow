@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Handle, Position, type NodeProps, type Node } from '@xyflow/svelte';
 	import type { MediaItem } from './node-types.svelte';
-	import { getFlowDoc } from '../LoroDoc.svelte';
+	import { getFlowDoc} from '../LoroDoc.svelte';
 
 
   type MediaListNode = Node<{
@@ -12,14 +12,14 @@
   let { id, data }: NodeProps<MediaListNode> = $props();
 
   $effect(() => {
-    getFlowDoc().addOrModifyNodeData({
-      id,
-      data: {
+      getFlowDoc().addOrModifyNodeData({
+        id,
+        data: {
         label: data.label,
-        items: data.items
-      },
-      type: 'mediaList'
-    })
+          items: data.items
+        },
+        type: 'mediaList'
+      })
   })
 
 

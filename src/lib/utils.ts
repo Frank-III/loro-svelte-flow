@@ -16,6 +16,7 @@ import type { Node } from '@xyflow/svelte';
 // }
 
 export function constructNodesFromLoroMap(loroMap: LoroMap): Node[] {
+	console.log('constructing nodes from loro map', loroMap.toJSON());
 	return Object.entries(loroMap.toJSON()).map(([id, node]) => {
 		let data;
 		switch (node.type) {

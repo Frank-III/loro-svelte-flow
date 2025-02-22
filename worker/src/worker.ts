@@ -36,16 +36,34 @@ export class SocketObject extends DurableObject {
 		}
 		this.flowDoc.import(new Uint8Array(message));
 		const serverVersion = this.flowDoc.version();
+		console.log('serverVersion', JSON.stringify(serverVersion.encode()));
 		this.clientVersion.set(_ws, serverVersion);
 		for (const ws of this.ctx.getWebSockets()) {
-			if (ws === _ws) continue;
-			const lastKnownVersion = this.clientVersion.get(ws);
-			const delta = this.flowDoc.export({
-				mode: 'update',
-				from: lastKnownVersion!,
-			});
-			ws.send(delta);
-			this.clientVersion.set(ws, serverVersion);
+			if (ws === _ws) {
+				ws.send(
+					JSON.stringify({
+						type: 'version',
+						payload: serverVersion.encode(),
+					}),
+				);
+			} else {
+				const lastKnownVersion = this.clientVersion.get(ws);
+				const delta = this.flowDoc.export({
+					mode: 'update',
+					from: lastKnownVersion!,
+				});
+				// console.log('delta', delta);
+				ws.send(
+					JSON.stringify({
+						type: 'delta-and-version',
+						payload: {
+							delta: delta,
+							version: serverVersion.encode(),
+						},
+					}),
+				);
+				this.clientVersion.set(ws, serverVersion);
+			}
 		}
 	}
 
@@ -54,6 +72,13 @@ export class SocketObject extends DurableObject {
 
 		this.ctx.acceptWebSocket(server);
 		this.clientVersion.set(client, this.flowDoc.version());
+		console.log('version', this.flowDoc.version().toJSON());
+		server.send(
+			JSON.stringify({
+				type: 'version',
+				payload: this.flowDoc.version().encode(),
+			}),
+		);
 		return new Response(null, {
 			status: 101,
 			webSocket: client,
@@ -63,7 +88,7 @@ export class SocketObject extends DurableObject {
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.get('/ws/:room', (c) => {
+app.get('/parties/main/:room', (c) => {
 	const upgrade = c.req.header('Upgrade');
 	if (upgrade !== 'websocket') {
 		c.status(426);
