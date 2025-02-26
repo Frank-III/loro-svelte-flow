@@ -9,18 +9,22 @@
     items: TextItem[];
   }, 'text-list'>;
 
-  let { id, data }: NodeProps<TextListNode> = $props();
+  let { id, data, positionAbsoluteX, positionAbsoluteY }: NodeProps<TextListNode> = $props();
 
   $effect(() => {
     const flowDoc = getFlowDoc();
-      flowDoc.addOrModifyNodeData({
-        id,
-        data: {
-          label: data.label,
-        items: data.items
+    flowDoc.addOrModifyNodeData({
+      id,
+      data: {
+        label: data.label,
+      items: data.items
+      },
+      position: {
+        x: positionAbsoluteX,
+        y: positionAbsoluteY
       },
       type: 'textList'
-      })
+    })
   })
 
   function addItem() {

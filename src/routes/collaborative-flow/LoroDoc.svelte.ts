@@ -8,8 +8,20 @@ import { getContext, setContext } from 'svelte';
 import type { Connection, Edge, Node } from '@xyflow/svelte';
 
 interface Structure {
-	nodes: LoroMap;
-	edges: LoroMap;
+	nodes: LoroMap<{
+		data: LoroMap<Record<string, unknown>>;
+		position: LoroMap<{
+			x: number;
+			y: number;
+		}>;
+		type: string;
+	}>;
+	edges: LoroMap<{
+		source: string;
+		sourceHandle: string;
+		target: string;
+		targetHandle: string;
+	}>;
 }
 
 export class FlowDoc {
@@ -26,18 +38,24 @@ export class FlowDoc {
 	addOrModifyNodeData(node: {
 		id: string;
 		data: Record<string, unknown>;
+		position: {
+			x: number;
+			y: number;
+		};
 		type: string;
 	}) {
 		if (this.isSyncing) return;
 		const nodeMap = this.loroNodes.getOrCreateContainer(node.id, new LoroMap());
-		const dataMap = nodeMap.setContainer('data', new LoroMap());
+		const dataMap = nodeMap.getOrCreateContainer('data', new LoroMap());
 		Object.entries(node.data).forEach(([key, value]) => {
 			dataMap.set(key, value);
 		});
 		nodeMap.set('type', node.type);
 		// TODO: maybe?
-		// nodeMap.set('position', node.position);
-		this.doc.commit();
+		const positionMap = nodeMap.getOrCreateContainer('position', new LoroMap());
+		positionMap.set('x', node.position.x);
+		positionMap.set('y', node.position.y);
+		this.commit(0);
 	}
 
 	modifyNodePosition(node: Node) {
@@ -46,25 +64,32 @@ export class FlowDoc {
 		const positionMap = nodeMap.getOrCreateContainer('position', new LoroMap());
 		positionMap.set('x', node.position.x);
 		positionMap.set('y', node.position.y);
-		this.doc.commit();
+		this.commit(1);
 	}
+
 	deleteNode(node: Node) {
 		if (this.isSyncing) return;
 		this.loroNodes.delete(node.id);
-		this.doc.commit();
+		this.commit(2);
 	}
+
 	addOrModifyEdge(edge: Edge) {
 		if (this.isSyncing) return;
 		const edgeMap = this.loroEdges.getOrCreateContainer(edge.id, new LoroMap());
 		edgeMap.set('source', edge.source);
 		edgeMap.set('sourceHandle', edge.sourceHandle);
 		edgeMap.set('target', edge.target);
-		this.doc.commit();
+		this.commit(3);
 	}
 
 	deleteEdge(edge: Edge) {
 		if (this.isSyncing) return;
 		this.loroEdges.delete(edge.id);
+		this.commit(4);
+	}
+
+	commit(from: number) {
+		console.log('committing', from);
 		this.doc.commit();
 	}
 

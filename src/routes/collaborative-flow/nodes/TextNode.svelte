@@ -7,13 +7,17 @@
     text: string;
   }, 'text-node'>;
 
-  let { id, data }: NodeProps<TextNode> = $props();
+  let { id, data, positionAbsoluteX, positionAbsoluteY }: NodeProps<TextNode> = $props();
 
   $effect(() => {
     getFlowDoc().addOrModifyNodeData({
       id,
       data: {
-        text: data.text
+        text: data.text,
+      },
+      position: {
+        x: positionAbsoluteX,
+        y: positionAbsoluteY
       },
       type: 'text'
     })

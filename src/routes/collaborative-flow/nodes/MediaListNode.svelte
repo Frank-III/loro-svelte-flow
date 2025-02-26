@@ -9,7 +9,7 @@
     items: MediaItem[];
   }, 'media-list'>;
 
-  let { id, data }: NodeProps<MediaListNode> = $props();
+  let { id, data, positionAbsoluteX, positionAbsoluteY }: NodeProps<MediaListNode> = $props();
 
   $effect(() => {
       getFlowDoc().addOrModifyNodeData({
@@ -17,6 +17,10 @@
         data: {
         label: data.label,
           items: data.items
+        },
+        position: {
+          x: positionAbsoluteX,
+          y: positionAbsoluteY
         },
         type: 'mediaList'
       })

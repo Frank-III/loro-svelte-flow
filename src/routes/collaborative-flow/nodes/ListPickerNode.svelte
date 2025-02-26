@@ -8,7 +8,7 @@
     selectedOption: string | undefined;
   }, 'list-picker'>;
 
-  let { id, data }: NodeProps<ListPickerNode> = $props();
+  let { id, data, positionAbsoluteX, positionAbsoluteY }: NodeProps<ListPickerNode> = $props();
 
   let isOpen = $state(false);
   
@@ -39,6 +39,10 @@
         label: data.label,
         options: data.options,
         selected: data.selected
+      },
+      position: {
+        x: positionAbsoluteX,
+        y: positionAbsoluteY
       },
       type: 'picker'
       })

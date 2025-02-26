@@ -20,7 +20,7 @@
   import MediaListNode from './nodes/MediaListNode.svelte';
   import ListPickerNode from './nodes/ListPickerNode.svelte';
   import { TextNodeData, TextListData, MediaListData, ListPickerData } from './nodes/node-types.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
   import { Spring } from 'svelte/motion';
 	import { VersionVector } from 'loro-crdt';
 	import { constructEdgesFromLoroMap, constructNodesFromLoroMap } from '@/utils';
@@ -55,6 +55,7 @@
         vvs = VersionVector.decode(new Uint8Array(Object.values(data.payload.version)));
         try {
           flowDoc!.doc.import(new Uint8Array(Object.values(data.payload.delta)));
+          flowDoc!.isSyncing = true;
           nodes = constructNodesFromLoroMap(flowDoc!.loroNodes);
           edges = constructEdgesFromLoroMap(flowDoc!.loroEdges);
         } finally {
@@ -66,11 +67,13 @@
     }
 
     const sub = flowDoc?.doc.subscribeLocalUpdates((event) => {
-      if (flowDoc!.isSyncing && !flowDoc?.doc.isDetached()) return
-          console.log('sending update', vvs)
-          const delta = flowDoc?.doc.export({mode: "update", from: vvs})
-          if (delta) {
-            ws?.send(delta.slice().buffer!)
+      if (flowDoc!.isSyncing) return
+          console.log('sending update', flowDoc?.doc.peerId)
+          if (vvs) {
+            const delta = flowDoc?.doc.export({mode: "update", from: vvs})
+            if (delta) {
+              ws?.send(delta.slice().buffer!)
+            }
           }
     })
     return () => {
@@ -82,7 +85,6 @@
   let flowDoc: FlowDoc | undefined;
   let nodes = $state.raw<Node[]>([]);
   let edges = $state.raw<Edge[]>([]);
-  // let toolbarPosition = $state(); // Default positiona
   let springToolbarPosition = new Spring({ x: 20, y: 20 }, {
     stiffness: 0.1,
     damping: 0.5,
@@ -134,7 +136,9 @@
       data: data as any
     };
 
-    flowDoc?.modifyNodePosition(newNode)
+    // console.log('newNode', newNode)
+
+    // flowDoc?.modifyNodePosition(newNode)
     
     nodes = [...nodes, newNode];
   };
