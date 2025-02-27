@@ -15,16 +15,17 @@
   import '@xyflow/svelte/dist/style.css';
   import { FlowDoc, setFlowDoc } from './LoroDoc.svelte';
   import Toolbar from './Toolbar.svelte';
-  import TextNode from './nodes/TextNode.svelte';
-  import TextListNode from './nodes/TextListNode.svelte';
-  import MediaListNode from './nodes/MediaListNode.svelte';
-  import ListPickerNode from './nodes/ListPickerNode.svelte';
-  import { TextNodeData, TextListData, MediaListData, ListPickerData } from './nodes/node-types.svelte';
-	import { onMount, untrack } from 'svelte';
+  import TextNode from './nodes/TextNode2.svelte';
+  import TextListNode from './nodes/TextListNode2.svelte';
+  import MediaListNode from './nodes/MediaListNode2.svelte';
+  import ListPickerNode from './nodes/ListPickerNode2.svelte';
+  // import { TextNodeData, TextListData, MediaListData, ListPickerData } from './nodes/node-types.svelte';
+	// import { onMount, untrack } from 'svelte';
   import { Spring } from 'svelte/motion';
 	import { VersionVector } from 'loro-crdt';
 	import { constructEdgesFromLoroMap, constructNodesFromLoroMap } from '@/utils';
 	import type { ServerToClient } from 'common';
+	import { onMount } from 'svelte';
   // Define node types
   const nodeTypes: NodeTypes = {
     text: TextNode,
@@ -34,8 +35,9 @@
   };
   let vvs = $state<VersionVector>();
 
+  let flowDoc: FlowDoc | undefined;
   $effect.root(() => {
-    let flowDoc = setFlowDoc();
+    flowDoc = setFlowDoc();
     const ws = new PartySocket({
       host: 'localhost:8787',
       room: "my-room",
@@ -82,7 +84,6 @@
     }
   })
 
-  let flowDoc: FlowDoc | undefined;
   let nodes = $state.raw<Node[]>([]);
   let edges = $state.raw<Edge[]>([]);
   let springToolbarPosition = new Spring({ x: 20, y: 20 }, {
@@ -112,35 +113,53 @@
 
     let data;
     const id = crypto.randomUUID();
+    
+    // Create data objects directly without using classes
     switch (type) {
       case 'text':
-        data = new TextNodeData();
+        data = { text: '' };
         break;
       case 'textList':
-        data = new TextListData();
+        data = { 
+          label: '', 
+          items: [{ id: crypto.randomUUID(), text: '' }] 
+        };
         break;
       case 'mediaList':
-        data = new MediaListData();
+        data = { 
+          label: '', 
+          items: [{ id: crypto.randomUUID(), text: '', imageUrl: '' }] 
+        };
         break;
       case 'picker':
-        data = new ListPickerData();
+        data = { 
+          label: '', 
+          options: ["Option 1", "Option 2", "Option 3"], 
+          selected: 0,
+          get selectedOption() {
+            return this.options[this.selected];
+          }
+        };
         break;
       default:
-        return {};
-      }
+        return;
+    }
     
     const newNode: Node = {
       id,
       type,
       position,
-      data: data as any
+      data
     };
-
-    // console.log('newNode', newNode)
-
-    // flowDoc?.modifyNodePosition(newNode)
     
     nodes = [...nodes, newNode];
+
+    flowDoc?.addOrModifyNodeData({
+      id,
+      data,
+      position,
+      type
+    });
   };
   
   const onPaneContextMenu = (event: MouseEvent) => {

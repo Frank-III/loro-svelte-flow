@@ -38,23 +38,39 @@ export class FlowDoc {
 	addOrModifyNodeData(node: {
 		id: string;
 		data: Record<string, unknown>;
-		position: {
+		position?: {
 			x: number;
 			y: number;
 		};
-		type: string;
+		type?: string;
 	}) {
 		if (this.isSyncing) return;
+
 		const nodeMap = this.loroNodes.getOrCreateContainer(node.id, new LoroMap());
-		const dataMap = nodeMap.getOrCreateContainer('data', new LoroMap());
-		Object.entries(node.data).forEach(([key, value]) => {
-			dataMap.set(key, value);
-		});
-		nodeMap.set('type', node.type);
-		// TODO: maybe?
-		const positionMap = nodeMap.getOrCreateContainer('position', new LoroMap());
-		positionMap.set('x', node.position.x);
-		positionMap.set('y', node.position.y);
+
+		// Update data if provided
+		if (node.data) {
+			const dataMap = nodeMap.getOrCreateContainer('data', new LoroMap());
+			Object.entries(node.data).forEach(([key, value]) => {
+				dataMap.set(key, value);
+			});
+		}
+
+		// Update type if provided
+		if (node.type) {
+			nodeMap.set('type', node.type);
+		}
+
+		// Update position if provided
+		if (node.position) {
+			const positionMap = nodeMap.getOrCreateContainer(
+				'position',
+				new LoroMap(),
+			);
+			positionMap.set('x', node.position.x);
+			positionMap.set('y', node.position.y);
+		}
+
 		this.commit(0);
 	}
 
@@ -112,4 +128,31 @@ export function setFlowDoc() {
 
 export function getFlowDoc() {
 	return getContext<FlowDoc>(FLOW_DOC_KEY);
+}
+
+// Generic function to update node data and sync with Loro
+export function updateNodeDataAndSync<T extends Record<string, unknown>>(
+	flowDoc: FlowDoc,
+	id: string,
+	updates: Partial<T>,
+	updateNodeData: (nodeId: string, data: Partial<T>) => void,
+	nodeType?: string,
+	position?: { x: number; y: number },
+) {
+	// const flowDoc = getFlowDoc();
+	// First update the node data in the flow
+	updateNodeData(id, updates);
+	// Then sync with Loro document
+	// @ts-expect-error - position is optional
+	const nodeData: Node & { position?: { x: number; y: number } } = {
+		id,
+		data: updates,
+		type: nodeType,
+	};
+
+	if (position) {
+		nodeData.position = position;
+	}
+
+	flowDoc.addOrModifyNodeData(nodeData);
 }
