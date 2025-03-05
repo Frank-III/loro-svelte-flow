@@ -48,5 +48,5 @@
 		"vite-plugin-wasm": "^3.4.1",
 		"wrangler": "^3.111.0"
 	},
-	"packageManager": null
+	"packageManager": "pnpm@10.5.2"
 }
