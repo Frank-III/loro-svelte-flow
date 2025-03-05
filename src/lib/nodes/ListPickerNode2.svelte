@@ -22,7 +22,7 @@
     updateNodeDataAndSync(
       flowDoc,
       id,
-      { selected: index },
+      { selected: index, selectedOption: data.options[index] },
       updateNodeData,
       'picker',
       { x: positionAbsoluteX, y: positionAbsoluteY }
