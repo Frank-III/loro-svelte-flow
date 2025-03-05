@@ -53,7 +53,7 @@
     const ws = new PartySocket({
       host: env.PUBLIC_DURABLE_OBJECT_ENDPOINT,
       room: page.params.room ?? 'my-room',
-      protocol: 'ws',
+      protocol: env.PUBLIC_ENV === 'dev' ? 'ws' : 'wss',
     })
     ws.onopen = (event) => {
       console.log('open', event)

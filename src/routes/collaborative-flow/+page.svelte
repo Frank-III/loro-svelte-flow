@@ -7,7 +7,8 @@
     edges_count: number;
   }
   function newFlow() {
-    const flow_id = crypto.randomUUID();
+    // generate a small random number of 5 characters
+    const flow_id = Math.random().toString(36).substring(2, 7);
     goto(`/collaborative-flow/${flow_id}`);
   }
 </script>

@@ -7,7 +7,7 @@ export class SocketObject extends DurableObject {
 	flowDoc: LoroDoc;
 	clientVersion: Map<WebSocket, VersionVector>;
 	lastSaveTime: number = 0;
-	saveInterval: number = 60000; // Save every minute
+	saveInterval: number = 30000; // Save every 30 seconds
 	hasActiveConnections: boolean = false;
 
 	constructor(ctx: DurableObjectState, env: Env) {
@@ -59,28 +59,26 @@ export class SocketObject extends DurableObject {
 	}
 
 	async saveToR2AndKV() {
-		if (!this.ctx.id) return;
-
 		try {
+			// Get the name that was used to create this Durable Object
+			// This is the room ID from the URL parameter
+			const name = this.ctx.id.name;
+			if (!name) return;
+
 			// Save binary state to R2
 			const state = this.flowDoc.export({ mode: 'snapshot' });
 			const env = this.env as Env;
-			await env.FLOW_BUCKET.put(`${this.ctx.id}`, state);
+			await env.FLOW_BUCKET.put(name, state);
 
 			// Extract and save metadata to KV
 			const metadata = {
 				lastModified: Date.now(),
-				// version: this.flowDoc.version().toJSON(),
 				nodes_count: this.flowDoc.getMap('nodes').size,
 				edges_count: this.flowDoc.getMap('edges').size,
-				// You could extract node/edge counts or other metadata here
 			};
 
-			await env.FLOW_KV.put(
-				`flow:${this.ctx.id}:meta`,
-				JSON.stringify(metadata),
-			);
-			console.log('Saved flow to R2 and KV', this.ctx.id);
+			await env.FLOW_KV.put(`flow:${name}:meta`, JSON.stringify(metadata));
+			console.log('Saved flow to R2 and KV with name:', name);
 		} catch (e) {
 			console.error('Failed to save to R2/KV:', e);
 		}

@@ -33,5 +33,10 @@
 	],
 	"observability": {
 		"enabled": true
-	}
+	},
+	"tail_consumers": [
+		{
+			"service": "loro-svelte-flow-worker-tail"
+		}
+	]
 }
