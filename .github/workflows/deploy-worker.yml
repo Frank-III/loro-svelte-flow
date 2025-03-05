@@ -2,8 +2,8 @@ name: Deploy Sidecar Worker
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
     paths:
       - 'worker/**'
       - 'common/**'
