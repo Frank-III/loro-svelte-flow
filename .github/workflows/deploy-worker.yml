@@ -8,6 +8,7 @@ on:
       - 'worker/**'
       - 'common/**'
       - '.github/workflows/deploy-worker.yml'
+      - 'package.json'
       - 'pnpm-lock.yaml'
 
 jobs:
