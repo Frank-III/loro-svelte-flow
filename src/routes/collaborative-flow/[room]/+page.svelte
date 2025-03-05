@@ -12,7 +12,7 @@
     useSvelteFlow,
   } from '@xyflow/svelte';
   import {page} from '$app/state'
-  import { PUBLIC_DURABLE_OBJECT_ENDPOINT } from '$env/static/public'
+  import { env } from '$env/dynamic/public'
   import PartySocket from 'partysocket';
   import '@xyflow/svelte/dist/style.css';
   import { FlowDoc, setFlowDoc } from '$lib/nodes/LoroDoc.svelte';
@@ -51,7 +51,7 @@
   $effect.root(() => {
     flowDoc = setFlowDoc(data.doc ? LoroDoc.fromSnapshot(data.doc): undefined);
     const ws = new PartySocket({
-      host: PUBLIC_DURABLE_OBJECT_ENDPOINT,
+      host: env.PUBLIC_DURABLE_OBJECT_ENDPOINT,
       room: page.params.room ?? 'my-room',
       protocol: 'ws',
     })
