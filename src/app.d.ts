@@ -4,7 +4,8 @@ declare global {
 	namespace App {
 		interface Platform {
 			env: {
-				DB: D1Database;
+				FLOW_BUCKET: R2Bucket;
+				FLOW_KV: KVNamespace;
 			};
 			context: ExecutionContext;
 		}

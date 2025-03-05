@@ -1,24 +1,25 @@
 <script lang="ts">
   import { Handle, Position, useSvelteFlow, type NodeProps, type Node } from '@xyflow/svelte';
-  import type { TextItem } from './node-types.svelte';
-  import { getFlowDoc, updateNodeDataAndSync } from '../LoroDoc.svelte';
+  import type { MediaItem } from './node-types.svelte';
+  import { updateNodeDataAndSync } from './LoroDoc.svelte';
+	import { getFlowDoc } from './LoroDoc.svelte';
 
-  type TextListNodeType = Node<{
+  type MediaListNodeType = Node<{
     label: string;
-    items: TextItem[];
-  }, 'textList'>;
+    items: MediaItem[];
+  }, 'mediaList'>;
 
-  let { id, data, positionAbsoluteX, positionAbsoluteY }: NodeProps<TextListNodeType> = $props();
+  let { id, data, positionAbsoluteX, positionAbsoluteY }: NodeProps<MediaListNodeType> = $props();
   const { updateNodeData } = useSvelteFlow();
   const flowDoc = getFlowDoc();
   function addItem() {
-    const newItems = [...data.items, { id: crypto.randomUUID(), text: '' }];
+    const newItems = [...data.items, { id: crypto.randomUUID(), text: '', imageUrl: '' }];
     updateNodeDataAndSync(
       flowDoc,
       id,
       { items: newItems },
       updateNodeData,
-      'textList',
+      'mediaList',
       { x: positionAbsoluteX, y: positionAbsoluteY }
     );
   }
@@ -30,22 +31,22 @@
       id,
       { items: newItems },
       updateNodeData,
-      'textList',
+      'mediaList',
       { x: positionAbsoluteX, y: positionAbsoluteY }
     );
   }
 
-  function updateItemText(itemId: string, newText: string) {
+  function updateItem(itemId: string, updates: Partial<MediaItem>) {
     const newItems = data.items.map(item => 
-      item.id === itemId ? { ...item, text: newText } : item
+      item.id === itemId ? { ...item, ...updates } : item
     );
     updateNodeDataAndSync(
       flowDoc,
       id,
       { items: newItems },
       updateNodeData,
-      'textList',
-      // { x: positionAbsoluteX, y: positionAbsoluteY }
+      'mediaList',
+      { x: positionAbsoluteX, y: positionAbsoluteY }
     );
   }
 
@@ -56,13 +57,28 @@
       id,
       { label: input.value },
       updateNodeData,
-      'textList',
-      // { x: positionAbsoluteX, y: positionAbsoluteY }
+      'mediaList',
+      { x: positionAbsoluteX, y: positionAbsoluteY }
     );
+  }
+
+  async function handleImageUpload(event: Event, itemId: string) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
+    if (file) {
+      // Convert the file to a data URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        updateItem(itemId, { imageUrl });
+      };
+      reader.readAsDataURL(file);
+    }
   }
 </script>
 
-<div class="text-list-node">
+<div class="media-list-node">
   <Handle type="target" position={Position.Left} />
   
   <div class="title">
@@ -73,13 +89,38 @@
   <div class="items">
     {#each data.items as item (item.id)}
       <div class="item">
+        <div class="media-container">
+          {#if item.imageUrl}
+            <img
+              src={item.imageUrl}
+              alt="Item"
+              class="preview-image"
+            />
+          {:else}
+            <div class="image-placeholder">
+              <label for="image-{item.id}" class="upload-label nodrag">
+                Upload Image
+              </label>
+            </div>
+          {/if}
+          <input
+            type="file"
+            id="image-{item.id}"
+            accept="image/*"
+            class="nodrag"
+            onchange={(e) => handleImageUpload(e, item.id)}
+            style="display: none;"
+          />
+        </div>
+        
         <input
           type="text"
           value={item.text}
-          oninput={(e) => updateItemText(item.id, e.currentTarget.value)}
+          oninput={(e) => updateItem(item.id, { text: e.currentTarget.value })}
           placeholder="Enter text..."
           class="nodrag"
         />
+        
         <button 
           class="remove-btn nodrag" 
           onclick={() => removeItem(item.id)}
@@ -87,6 +128,7 @@
         >
           ×
         </button>
+        
         <Handle
           type="source"
           position={Position.Right}
@@ -99,12 +141,12 @@
 </div>
 
 <style>
-  .text-list-node {
+  .media-list-node {
     padding: 10px;
     border-radius: 5px;
     background: white;
     border: 1px solid #ddd;
-    min-width: 200px;
+    min-width: 300px;
   }
 
   .title {
@@ -119,17 +161,56 @@
   .items {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
   }
 
   .item {
     display: flex;
     align-items: center;
+    gap: 8px;
     position: relative;
     padding-right: 20px;
   }
 
-  input {
+  .media-container {
+    width: 60px;
+    height: 60px;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+  }
+
+  .upload-label {
+    font-size: 10px;
+    color: #666;
+    cursor: pointer;
+    text-align: center;
+    padding: 4px;
+  }
+
+  .upload-label:hover {
+    color: #333;
+  }
+
+  input[type="text"] {
     flex: 1;
     padding: 6px;
     border: 1px solid #ddd;
@@ -137,7 +218,7 @@
     font-size: 12px;
   }
 
-  input:focus {
+  input[type="text"]:focus {
     outline: none;
     border-color: #aaa;
   }
@@ -169,4 +250,4 @@
   .remove-btn:hover {
     color: #ff0000;
   }
-</style>
+</style> 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Handle, Position, useSvelteFlow, type NodeProps, type Node } from '@xyflow/svelte';
-  import { getFlowDoc, updateNodeDataAndSync } from '../LoroDoc.svelte';
+  import { getFlowDoc, updateNodeDataAndSync } from './LoroDoc.svelte';
 
   type ListPickerNodeType = Node<{
     label: string;

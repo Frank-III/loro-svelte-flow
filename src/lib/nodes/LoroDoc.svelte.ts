@@ -1,9 +1,4 @@
 import { LoroDoc, LoroList, LoroMap } from 'loro-crdt';
-import {
-	ListPickerData,
-	MediaListData,
-	TextNodeData,
-} from './nodes/node-types.svelte';
 import { getContext, setContext } from 'svelte';
 import type { Connection, Edge, Node } from '@xyflow/svelte';
 
@@ -120,8 +115,8 @@ export class FlowDoc {
 
 const FLOW_DOC_KEY = Symbol('flowDoc');
 
-export function setFlowDoc() {
-	const flowDoc = new FlowDoc();
+export function setFlowDoc(doc?: LoroDoc) {
+	const flowDoc = new FlowDoc(doc);
 	setContext(FLOW_DOC_KEY, flowDoc);
 	return flowDoc;
 }

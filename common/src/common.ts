@@ -22,4 +22,11 @@ export type ServerToClient =
 				delta: Uint8Array;
 				version: Uint8Array;
 			};
+	  }
+	| {
+			type: 'version-and-doc';
+			payload: {
+				version: Uint8Array;
+				doc: Uint8Array;
+			};
 	  };
