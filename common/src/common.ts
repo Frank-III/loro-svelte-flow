@@ -7,6 +7,10 @@ export const clientToServerSchema = z.object({
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
 
+export const renameFlowSchema = z.object({
+	name: z.string(),
+});
+
 export type ServerToClient =
 	| {
 			type: 'delta';
@@ -21,5 +25,12 @@ export type ServerToClient =
 			payload: {
 				delta: Uint8Array;
 				version: Uint8Array;
+			};
+	  }
+	| {
+			type: 'version-and-doc';
+			payload: {
+				version: Uint8Array;
+				doc: Uint8Array;
 			};
 	  };

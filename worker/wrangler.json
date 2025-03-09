@@ -3,13 +3,11 @@
 	"name": "loro-svelte-flow-worker",
 	"main": "src/worker.ts",
 	"compatibility_date": "2025-02-04",
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "svelte-flow",
-			"database_id": "0af2e57e-b447-44a6-ae44-a51484325d9a"
-		}
-	],
+	"triggers": {
+		"crons": [
+			"0 0 * * *"
+		]
+	},
 	"durable_objects": {
 		"bindings": [
 			{
@@ -18,6 +16,18 @@
 			}
 		]
 	},
+	"r2_buckets": [
+		{
+			"binding": "FLOW_BUCKET",
+			"bucket_name": "loro-doc"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "FLOW_KV",
+			"id": "d5f2e6ce70ba440bac099a4e3402720f"
+		}
+	],
 	"migrations": [
 		{
 			"tag": "v1",
@@ -28,5 +38,10 @@
 	],
 	"observability": {
 		"enabled": true
-	}
+	},
+	"tail_consumers": [
+		{
+			"service": "loro-svelte-flow-worker-tail"
+		}
+	]
 }

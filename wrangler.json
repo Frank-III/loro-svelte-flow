@@ -3,11 +3,16 @@
 	"name": "loro-svelte-flow",
 	"pages_build_output_dir": "./.svelte-kit/cloudflare",
 	"compatibility_date": "2025-02-04",
-	"d1_databases": [
+	"r2_buckets": [
 		{
-			"binding": "DB",
-			"database_name": "svelte-flow",
-			"database_id": "0af2e57e-b447-44a6-ae44-a51484325d9a"
+			"binding": "FLOW_BUCKET",
+			"bucket_name": "loro-doc"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "FLOW_KV",
+			"id": "d5f2e6ce70ba440bac099a4e3402720f"
 		}
 	],
 	"observability": {

@@ -2,15 +2,15 @@
 
 // import { type ClassValue, clsx } from "clsx";
 // import { twMerge } from "tailwind-merge";
-
-import type { LoroMap } from 'loro-crdt';
-import {
-	ListPickerData,
-	MediaListData,
-	TextListData,
-	TextNodeData,
-} from '../routes/collaborative-flow/nodes/node-types.svelte';
+// import { getFlowDoc } from '../routes/collaborative-flow/LoroDoc.svelte';
 import type { Node } from '@xyflow/svelte';
+import type { LoroMap } from 'loro-crdt';
+// import {
+// 	ListPickerData,
+// 	MediaListData,
+// 	TextListData,
+// 	TextNodeData,
+// } from '../routes/collaborative-flow/nodes/node-types.svelte';
 // export function cn(...inputs: ClassValue[]) {
 // 	return twMerge(clsx(inputs));
 // }
@@ -21,26 +21,44 @@ export function constructNodesFromLoroMap(loroMap: LoroMap): Node[] {
 		let data;
 		switch (node.type) {
 			case 'text':
-				data = new TextNodeData(node.data.text);
+				data = { text: node.data.text || '' };
 				break;
 			case 'textList':
-				data = new TextListData(node.data.label, node.data.items);
+				data = {
+					label: node.data.label || '',
+					items: node.data.items || [{ id: crypto.randomUUID(), text: '' }],
+				};
 				break;
 			case 'mediaList':
-				data = new MediaListData(node.data.label, node.data.items);
+				data = {
+					label: node.data.label || '',
+					items: node.data.items || [
+						{ id: crypto.randomUUID(), text: '', imageUrl: '' },
+					],
+				};
 				break;
-			case 'listPicker':
-				data = new ListPickerData(
-					node.data.label,
-					node.data.options,
-					node.data.selected,
-				);
+			case 'picker': {
+				const options = node.data.options ?? [
+					'Option 1',
+					'Option 2',
+					'Option 3',
+				];
+				const selected = node.data.selected ?? 0;
+				data = {
+					label: node.data.label || '',
+					options,
+					selected,
+					selectedOption: options[selected],
+				};
 				break;
+			}
+			default:
+				data = node.data || {};
 		}
 		return {
 			...node,
 			id,
-			data: data,
+			data,
 		};
 	});
 }
