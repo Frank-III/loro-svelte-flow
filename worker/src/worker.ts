@@ -1,14 +1,16 @@
 import { DurableObject } from 'cloudflare:workers';
 import { Hono } from 'hono';
-import { ServerToClient, clientToServerSchema } from 'common';
+import { ServerToClient, clientToServerSchema, renameFlowSchema } from 'common';
 import { LoroDoc, VersionVector } from 'loro-crdt';
-
+import { validator } from 'hono/validator';
 export class SocketObject extends DurableObject {
 	flowDoc: LoroDoc;
 	clientVersion: Map<WebSocket, VersionVector>;
 	lastSaveTime: number = 0;
 	saveInterval: number = 30000; // Save every 30 seconds
 	hasActiveConnections: boolean = false;
+	deleted: boolean = false;
+	roomId?: string;
 
 	constructor(ctx: DurableObjectState, env: Env) {
 		super(ctx, env);
@@ -19,6 +21,9 @@ export class SocketObject extends DurableObject {
 		ctx.blockConcurrencyWhile(async () => {
 			try {
 				const stored = await ctx.storage.get<Uint8Array>('flowState');
+				if (!this.roomId) {
+					this.roomId = await ctx.storage.get('roomId');
+				}
 				if (stored) {
 					this.flowDoc = LoroDoc.fromSnapshot(new Uint8Array(stored));
 				}
@@ -46,6 +51,7 @@ export class SocketObject extends DurableObject {
 	}
 
 	async saveToStorage(force: boolean = false) {
+		if (this.deleted) return;
 		const now = Date.now();
 		// Only save if enough time has passed since last save or if forced
 		if (!force && now - this.lastSaveTime < this.saveInterval) return;
@@ -60,9 +66,7 @@ export class SocketObject extends DurableObject {
 
 	async saveToR2AndKV() {
 		try {
-			// Get the name that was used to create this Durable Object
-			// This is the room ID from the URL parameter
-			const name = this.ctx.id.name;
+			const name = this.roomId;
 			if (!name) return;
 
 			// Save binary state to R2
@@ -146,9 +150,8 @@ export class SocketObject extends DurableObject {
 	webSocketClose(ws: WebSocket) {
 		// Remove the client from our version tracking
 		this.clientVersion.delete(ws);
-
 		// If no more connections, perform a final save and cancel future alarms
-		if (this.ctx.getWebSockets().length === 0) {
+		if (this.ctx.getWebSockets().length === 1) {
 			this.hasActiveConnections = false;
 			// Do a final save
 			this.saveToStorage(true).catch((err) =>
@@ -162,7 +165,40 @@ export class SocketObject extends DurableObject {
 		}
 	}
 
+	async delete() {
+		await this.ctx.storage.deleteAll();
+		await (this.env as Env).FLOW_KV.delete(`flow:${this.roomId}:meta`);
+		await (this.env as Env).FLOW_BUCKET.delete(this.roomId!);
+	}
+
+	async rename(name: string) {
+		// Store both the old and new room ID
+		await this.delete();
+		// const oldRoomId = this.roomId;
+		this.roomId = name;
+		await this.ctx.storage.put('roomId', this.roomId);
+
+		// Save current state to storage
+		await this.saveToStorage(true);
+
+		// Also save with the new name in R2 and KV
+		await this.saveToR2AndKV();
+
+		// Mark this object as deleted to prevent further saves with the old ID
+		this.deleted = true;
+	}
+
 	async fetch(_req: Request): Promise<Response> {
+		// Extract and store the room ID from the URL if not already set
+		if (!this.roomId) {
+			// Extract from URL or request
+			const url = new URL(_req.url);
+			const pathParts = url.pathname.split('/');
+			this.roomId = pathParts[pathParts.length - 1]; // Get the last part of the path
+			// Or store it in Durable Object storage for persistence
+			await this.ctx.storage.put('roomId', this.roomId);
+		}
+
 		try {
 			const stored = await this.ctx.storage.get<Uint8Array>('flowState');
 			if (stored) {
@@ -238,4 +274,79 @@ app.get('/flows', async (c) => {
 	return c.json(flows);
 });
 
-export default app;
+app.post(
+	'/flows/rename/:room',
+	validator('json', (value, c) => {
+		const parsed = renameFlowSchema.safeParse(value);
+		if (!parsed.success) {
+			return c.text('Invalid!', 401);
+		}
+		return parsed.data;
+	}),
+	async (c) => {
+		const oldRoomId = c.req.param('room');
+		const newName = c.req.valid('json').name;
+
+		// Get the old Durable Object
+		const oldId = c.env.SOCKET_OBJECT.idFromName(oldRoomId);
+		const oldSocket = c.env.SOCKET_OBJECT.get(oldId);
+
+		// Create a new Durable Object with the new name
+		const newId = c.env.SOCKET_OBJECT.idFromName(newName);
+		// const newSocket = c.env.SOCKET_OBJECT.get(newId);
+		// Rename the old object (which saves its state)
+		await oldSocket.rename(newName);
+		console.log('oldSocket', oldSocket);
+
+		// Initialize the new object (it will load from R2/KV on first access)
+		// await newSocket.fetch(
+		// 	new Request(`https://example.com/parties/main/${newName}`),
+		// );
+
+		// console.log('newSocket', newSocket);
+		return c.json({ success: true });
+	},
+);
+
+export default {
+	fetch: app.fetch,
+	async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+		console.log('Running scheduled cleanup task');
+
+		try {
+			// Get list of all flows from KV
+			const list = await env.FLOW_KV.list({ prefix: 'flow:' });
+
+			// Set retention period (e.g., 30 days in milliseconds)
+			const retentionPeriod = 24 * 60 * 60 * 1000;
+			const now = Date.now();
+
+			// Process each flow
+			for (const key of list.keys) {
+				// Extract the room ID from the key
+				const roomId = key.name.split(':')[1];
+
+				// Get metadata to check last modified date
+				const metaStr = await env.FLOW_KV.get(key.name);
+				if (!metaStr) continue;
+
+				const meta = JSON.parse(metaStr);
+
+				// If the flow hasn't been modified within retention period, delete it
+				if (now - meta.lastModified > retentionPeriod) {
+					console.log(`Cleaning up stale flow: ${roomId}`);
+
+					// Delete from KV
+					await env.FLOW_KV.delete(key.name);
+
+					// Delete from R2 bucket
+					await env.FLOW_BUCKET.delete(roomId!);
+				}
+			}
+
+			console.log('Cleanup task completed successfully');
+		} catch (error) {
+			console.error('Error during cleanup task:', error);
+		}
+	},
+};

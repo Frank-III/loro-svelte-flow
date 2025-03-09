@@ -3,6 +3,11 @@
 	"name": "loro-svelte-flow-worker",
 	"main": "src/worker.ts",
 	"compatibility_date": "2025-02-04",
+	"triggers": {
+		"crons": [
+			"0 0 * * *"
+		]
+	},
 	"durable_objects": {
 		"bindings": [
 			{

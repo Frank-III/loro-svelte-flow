@@ -1,65 +1,20 @@
 <script lang="ts">
-	import NextStep from '$lib/components/NextStep.svelte';
 </script>
 
-<main class="flex h-screen flex-col items-center justify-center">
-	<img src="/favicon.png" class="w-32" alt="o7 Logo" />
-	<h1 class="text-3xl font-bold">Welcome to the o7 stack!</h1>
-	<h2 class="my-6 text-2xl">Next Steps:</h2>
-	<div class="flex max-w-5xl justify-center gap-4 px-3">
-		<NextStep
-			title="Edit this page"
-			learnMore="https://svelte.dev/tutorial/basics"
-		>
-			<p>
-				Edit <code class="text-lime-300">src/routes/+page.svelte</code> to see your
-				changes live.
-			</p>
-			<p>
-				The source for these cards is in <code class="text-lime-300"
-					>src/lib/components/NextStep.svelte</code
-				>.
-			</p>
-			<p>
-				There's some global styling in <code class="text-lime-300"
-					>src/app.css</code
-				>.
-			</p>
-		</NextStep>
-		<NextStep
-			title="Work on your database schema"
-			learnMore="https://www.prisma.io/docs/concepts/components/prisma-schema"
-		>
-			<p>
-				Write a Prisma schema in <code class="text-red-300"
-					>prisma/schema.prisma</code
-				>.
-			</p>
-			<p>
-				Insert your database connection details into <code class="text-red-300"
-					>.env</code
-				>.
-			</p>
-			<p>
-				Run <code class="text-red-300">pnpm db:push</code> to update your database
-				typings.
-			</p>
-			<p>
-				Remember that you're using <a
-					href="https://github.com/kysely-org/kysely"
-					target="_blank"
-					class="text-blue-400 hover:underline">Kysely</a
-				>
-				instead of Prisma to make your queries, and
-				<code class="text-red-300">import {'{ db }'} from '$lib/db'</code>!
-			</p>
-		</NextStep>
-	</div>
-</main>
+<div class="flex h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-950">
+	<h1 class="text-4xl font-bold text-indigo-700 dark:text-indigo-400 mb-3">Welcome to Flow</h1>
+	<p class="text-lg text-gray-700 dark:text-gray-300 mb-6 max-w-md text-center">
+		Flow is a collaborative flowchart builder.
+	</p>
+</div>
 
 <style>
-	code {
-		background: var(--color-zinc-900);
-		padding: calc(var(--spacing) * 0.5);
+	h1 {
+		font-family: 'Inter', system-ui, sans-serif;
+		letter-spacing: -0.025em;
+	}
+	
+	p {
+		line-height: 1.6;
 	}
 </style>

@@ -73,34 +73,55 @@
   }
 </script>
 
-<div class="list-picker-node" class:active={isOpen}>
-  <Handle type="target" position={Position.Left} />
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 border border-gray-200 dark:border-gray-700 min-w-[180px] transition-colors duration-200" class:active={isOpen}>
+  <Handle 
+    type="target" 
+    position={Position.Left} 
+    class="w-2 h-2 bg-orange-400 dark:bg-orange-500 border-2 border-white dark:border-gray-800"
+  />
   
-  <div class="title">
-    <input type="text" value={data.label} oninput={updateLabel} class="nodrag" />
-    <button class="add-btn nodrag" onclick={addOption}>+</button>
+  <div class="flex items-center justify-between mb-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+    <input 
+      type="text" 
+      value={data.label} 
+      oninput={updateLabel} 
+      placeholder="Picker title..."
+      class="nodrag flex-1 bg-transparent text-gray-800 dark:text-gray-200 font-medium focus:outline-none text-sm"
+    />
+    <button 
+      class="nodrag flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900 text-orange-500 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-800 transition-colors duration-200"
+      onclick={addOption}
+      aria-label="Add option"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+      </svg>
+    </button>
   </div>
   
   <div class="picker-container">
     <button 
-      class="select-button nodrag" 
+      class="select-button nodrag w-full px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:focus:ring-orange-500 focus:border-transparent transition-colors duration-200 text-sm flex justify-between items-center"
       onclick={toggleDropdown}
     >
-      {data.selectedOption}
-      <span class="arrow">▼</span>
+      <span>{data.selectedOption}</span>
+      <span class="text-orange-400 dark:text-orange-500 text-xs">▼</span>
     </button>
     
     {#if isOpen}
-      <div class="options-list">
+      <div class="options-list bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-md mt-1 max-h-32 overflow-y-auto z-10">
         {#each data.options as option, idx }
-          <div class="option-item">
-            <button class="option-button nodrag" onclick={() => selectOption(idx)}>{option}</button>
+          <div class="option-item hover:bg-orange-50 dark:hover:bg-orange-900/20 flex items-center justify-between px-2 py-1">
+            <button class="option-button nodrag text-sm text-left w-full text-gray-800 dark:text-gray-200" onclick={() => selectOption(idx)}>{option}</button>
             {#if data.options.length > 1}
               <button 
-                class="remove-btn nodrag"
+                aria-label="Remove option"
+                class="remove-btn nodrag text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
                 onclick={() => removeOption(option)}
               >
-                ×
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
               </button>
             {/if}
           </div>
@@ -109,124 +130,9 @@
     {/if}
   </div>
   
-  <Handle type="source" position={Position.Right} />
+  <Handle 
+    type="source" 
+    position={Position.Right} 
+    class="w-2 h-2 bg-orange-400 dark:bg-orange-500 border-2 border-white dark:border-gray-800"
+  />
 </div>
-
-<style>
-  .list-picker-node {
-    padding: 10px;
-    border-radius: 5px;
-    background: white;
-    border: 1px solid #ddd;
-    min-width: 200px;
-    position: relative;
-  }
-
-  .list-picker-node.active {
-    z-index: 10;
-  }
-
-  .title {
-    font-size: 12px;
-    color: #777;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .picker-container {
-    position: relative;
-  }
-
-  .select-button {
-    width: 100%;
-    padding: 8px 12px;
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    text-align: left;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-  }
-
-  .select-button:hover {
-    background: #eee;
-  }
-
-  .arrow {
-    font-size: 10px;
-    color: #666;
-  }
-
-  .options-list {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-top: 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-
-  .option-item {
-    display: flex;
-    align-items: center;
-    padding: 4px 8px;
-  }
-
-  .option-input {
-    flex: 1;
-    padding: 4px 8px;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    font-size: 12px;
-    background: transparent;
-  }
-
-  .option-input:hover {
-    border-color: #ddd;
-  }
-
-  .option-input:focus {
-    border-color: #aaa;
-    outline: none;
-    background: white;
-  }
-
-  .add-btn, .remove-btn {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    line-height: 1;
-  }
-
-  .add-btn {
-    color: #666;
-    background: #eee;
-  }
-
-  .remove-btn {
-    color: #ff4444;
-    margin-left: 4px;
-    font-size: 14px;
-  }
-
-  .add-btn:hover {
-    background: #ddd;
-  }
-
-  .remove-btn:hover {
-    color: #ff0000;
-  }
-</style>

@@ -23,45 +23,24 @@
   }
 </script>
 
-<div class="text-node">
-  <Handle type="target" position={Position.Left} />
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-2 border border-gray-200 dark:border-gray-700 min-w-[180px] transition-colors duration-200">
+  <Handle 
+    type="target" 
+    position={Position.Left} 
+    class="w-2 h-2 bg-orange-400 dark:bg-orange-500 border-2 border-white dark:border-gray-800"
+  />
   
   <input
     type="text"
     value={data.text}
     oninput={handleTextChange}
     placeholder="Enter text..."
-    class="nodrag"
+    class="nodrag w-full px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:focus:ring-orange-500 focus:border-transparent transition-colors duration-200 text-sm"
   />
   
-  <Handle type="source" position={Position.Right} />
+  <Handle 
+    type="source" 
+    position={Position.Right} 
+    class="w-2 h-2 bg-orange-400 dark:bg-orange-500 border-2 border-white dark:border-gray-800"
+  />
 </div>
-
-<style>
-  .text-node {
-    padding: 10px;
-    border-radius: 5px;
-    background: white;
-    border: 1px solid #ddd;
-    min-width: 150px;
-  }
-
-  .title {
-    font-size: 12px;
-    color: #777;
-    margin-bottom: 5px;
-  }
-
-  input {
-    width: 100%;
-    padding: 6px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 12px;
-  }
-
-  input:focus {
-    outline: none;
-    border-color: #aaa;
-  }
-</style>
